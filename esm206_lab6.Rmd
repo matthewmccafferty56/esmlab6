@@ -1,0 +1,134 @@
+---
+title: "esm206_lab6_matthew_mccafferty"
+author: "Matthew McCafferty"
+date: "11/2/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(palmerpenguins)
+library(broom)
+library(equatiomatic)
+```
+
+## Rank Based Test example
+
+Mann-Whitney U (non-parametric alternative to an unpaired 2 sample t-test).
+
+H0: Equal ranks (or medians)
+HA: Populations where ranks are not equal (or, medians not equal)
+
+### Create Samples
+
+'set.seed()' to create "pseudorandom, but reproducible samples"
+
+
+```{r}
+set.seed(1414)
+gp_1 <- sample.int(20, size = 15, replace = TRUE)
+
+set.seed(1424)
+gp_2 <- sample.int(30, size = 15, replace = TRUE)
+```
+
+Take a quick look at the distribution using 'hist()'
+
+```{r}
+hist(gp_1)
+hist(gp_2)
+```
+
+Try a t-test so we can compare the results:
+
+```{r}
+ttest <- t.test(gp_1, gp_2)
+
+# If these data were paired, I coan just add the argument 'paired= "TRUE" within the t.test() function. 
+```
+
+This p.value means that if our samples are drawn from populations with the same mean (i.e., if the null hypothesis is true) there is a `r round(ttest$p.value, 2)` propbability of finding sample means *atleast as different* as mine by random chance.  
+[A more comprehensive explanation of difference between groups... actually means, data spread, effect size] there is no significant difference (t(df) = t-statistic value, p = ).
+
+### Mann Whitney U rank based test
+
+We use the 'wilcox.test()' function to perform a two-sample rank-based test.
+
+```{r}
+mwu <- wilcox.test(gp_1, gp_2)
+```
+
+what does that *p*-value of 0.28 actually mean? It means that if the null hypothesis is true (these samples were drawn from populations with the same median), there is a probability of 0.28 that we could have found median values *at least as different as ours* by chance. In other words: not sufficient evidence to reject the null hypothesis of equal ranks (or medians) using a significance level of 0.05.
+
+This p value means that if our samples our drawn from a population with the same median, there is a 28% chance of finding sample medians at leaset as different as ours by random chance.
+
+There is no sigificant difference in medians (Mann-Whitney U; U = `rmwu$statistic`, p = `r round(mwu$p.value, 2)`).
+
+## Simple Linear Regression
+
+Two variables *continuous quantitative* that you are trying to understand the realationship between, and you think that a linear relationship makes sense.
+
+Use the `penguins` data from palmer penguins , exploring the flipper length (x) versus body mass(y)
+
+```{r}
+# use view function to look at
+# Make ecporatory scatterplot of penguin flipper length in x-axis vers body mass y axis
+
+ggplot(data = penguins, aes(x= flipper_length_mm, y= body_mass_g)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+```
+### Find the model estimates (coefficients)
+
+Use the `lm` function for linear model. 
+
+```{r}
+penguin_lm <- lm(body_mass_g ~ flipper_length_mm, data = penguins)
+
+summary(penguin_lm)
+
+```
+Both the intercept and flipper_length_mm coefficients are significantly different from zero (not super interesting)
+- The R^2^ value is 0.759 - meaning that 75.9% of variance in body mass is explained by flipper length
+49.69g per mm (flipper length)
+
+intercept -5780.83 is the expected average mass with penguins that have a flipper length of zero
+
+```{r}
+extract_eq()
+```
+
+Model Coefficients : `r penguin_lm$coefficients`
+Flipper length coefficient: `r penguin_lm$coefficients[2]`
+
+### Use `broom:: tidy()` to get a tidy output from lm()
+
+```{r}
+penguin_lm_tidy <- tidy(penguin_lm)
+
+penguin_lm_tidy
+```
+### Use broom::glance() to get output of model fit and statis
+
+```{r}
+penguin_lm_glance <- glance(penguin_lm)
+
+penguin_lm_glance
+```
+### Use equamatic to reurn model to latex
+```{r}
+extract_eq(model = penguin_lm, use_coefs = TRUE)
+```
+
+$\frac{apples}{bananas}$
+
+###Use plot function to automaticall produce diagnostic plots
+
+```{r}
+plot(penguin_lm)
+```
+
+
